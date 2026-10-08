@@ -1,125 +1,206 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Roblox Server Finder</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#08090d;color:#fff;font-family:Arial,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#08090d;color:#fff;font-family:Arial,sans-serif}
 .wrap{max-width:850px;margin:auto;padding:25px 18px 60px}
-nav{display:flex;justify-content:space-between;padding:10px 0 45px}.logo{font-weight:900;font-size:20px}.logo span,h1 span{color:#805cff}
-nav a{color:#aaa;text-decoration:none;margin-left:18px}.hero{text-align:center}
+nav{display:flex;justify-content:space-between;padding:10px 0 45px}
+.logo{font-weight:900;font-size:20px}
+.logo span,h1 span{color:#805cff}
+nav a{color:#aaa;text-decoration:none;margin-left:18px}
+.hero{text-align:center}
 .badge{display:inline-block;border:1px solid #303248;border-radius:30px;padding:9px 15px;color:#a99cff}
 h1{font-size:clamp(45px,9vw,78px);line-height:.95;letter-spacing:-4px;margin:25px 0 18px}
 .hero>p{max-width:680px;margin:auto;color:#999dab;font-size:18px;line-height:1.6}
 .card{margin:35px auto;padding:25px;border:1px solid #292c3b;border-radius:22px;background:#111218}
 input{width:100%;padding:18px;border-radius:14px;border:1px solid #303344;background:#08090d;color:#fff;font-size:17px;outline:none}
-button{width:100%;margin-top:12px;padding:18px;border:0;border-radius:14px;background:#805cff;color:white;font-weight:bold;font-size:17px}
+button{width:100%;margin-top:12px;padding:18px;border:0;border-radius:14px;background:#805cff;color:white;font-weight:bold;font-size:17px;cursor:pointer}
 button:disabled{opacity:.55}
-.result{display:none;margin-top:18px;padding:20px;border:1px solid #292c3b;border-radius:16px;background:#090a0f;text-align:left;line-height:1.8}
-.ok{color:#7df0a7}.muted{color:#969aa9;font-size:14px}.id{font-family:monospace;color:#c4baff}
+.result{display:none;margin-top:18px;padding:20px;border:1px solid #292c3b;border-radius:16px;background:#090a0f;text-align:left;line-height:1.8;overflow-wrap:anywhere}
+.ok{color:#7df0a7}
+.muted{color:#969aa9;font-size:14px}
+.id{font-family:monospace;color:#c4baff}
 a.join{display:inline-block;margin-top:16px;padding:13px 18px;background:#805cff;border-radius:10px;color:white;text-decoration:none;font-weight:bold}
 .small{margin-top:18px;color:#7e8291;font-size:12px;line-height:1.6}
 </style>
 </head>
+
 <body>
 <div class="wrap">
-<nav><div class="logo">RSF <span>•</span> Roblox Server Finder</div><div><a href="#buscar">Buscar</a></div></nav>
+
+<nav>
+  <div class="logo">RSF <span>•</span> Roblox Server Finder</div>
+  <div><a href="#buscar">Buscar</a></div>
+</nav>
 
 <section class="hero" id="buscar">
-<div class="badge">ROBLOX • SERVER FINDER</div>
-<h1>Encontre um <span>servidor.</span></h1>
-<p>Digite apenas o username. O site encontra o User ID automaticamente e depois consulta a presença pública.</p>
+  <div class="badge">ROBLOX • SERVER FINDER</div>
+  <h1>Encontre um <span>servidor.</span></h1>
+  <p>Digite o username do Roblox para consultar o User ID e a presença pública do jogador.</p>
 
-<div class="card">
-<input id="username" type="text" placeholder="Digite o username do Roblox..." autocomplete="off">
-<button id="btn" onclick="buscar()">Buscar jogador</button>
-<div id="result" class="result"></div>
-<div class="small">
-A documentação oficial do Roblox disponibiliza o endpoint de usuários por username e o endpoint de Presence. Ambos podem ser consultados sem cookie de autenticação. 
-</div>
-</div>
+  <div class="card">
+    <input id="username" type="text" placeholder="Digite o username do Roblox..." autocomplete="off">
+    <button id="btn" onclick="buscar()">Buscar jogador</button>
+    <div id="result" class="result"></div>
+    <div class="small">
+      A consulta utiliza as APIs públicas do Roblox. Os resultados dependem da disponibilidade dessas APIs e das informações de presença retornadas.
+    </div>
+  </div>
 </section>
 </div>
 
 <script>
 async function buscar(){
- const nome=document.getElementById("username").value.trim();
- const btn=document.getElementById("btn");
- const box=document.getElementById("result");
- if(!nome){box.style.display="block";box.innerHTML="<b>Digite um username.</b>";return}
+  const nome = document.getElementById("username").value.trim();
+  const btn = document.getElementById("btn");
+  const box = document.getElementById("result");
 
- btn.disabled=true;
- box.style.display="block";
- box.innerHTML="🔎 Encontrando o User ID de <b>"+esc(nome)+"</b>...";
+  if(!nome){
+    box.style.display = "block";
+    box.innerHTML = "<b>Digite um username.</b>";
+    return;
+  }
 
- try{
-   // 1) Username -> User ID
-   const ur=await fetch("https://users.roblox.com/v1/usernames/users",{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({
-       usernames:[nome],
-       excludeBannedUsers:false
-     })
-   });
-   if(!ur.ok) throw new Error("Falha ao consultar usuários ("+ur.status+")");
-   const ud=await ur.json();
+  btn.disabled = true;
+  box.style.display = "block";
+  box.innerHTML = "🔎 Procurando o jogador...";
 
-   if(!ud.data || !ud.data.length){
-     box.innerHTML="❌ <b>Usuário não encontrado.</b><br><span class='muted'>Confira o username e tente novamente.</span>";
-     return;
-   }
+  try {
+    // 1. Username -> User ID
+    const ur = await fetch(
+      "https://users.roblox.com/v1/usernames/users",
+      {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          usernames: [nome],
+          excludeBannedUsers: false
+        })
+      }
+    );
 
-   const user=ud.data[0];
-   box.innerHTML="👤 <b>"+esc(user.name)+"</b><br><span class='muted'>User ID: <span class='id'>"+user.id+"</span><br>Consultando presença...</span>";
+    if(!ur.ok){
+      throw new Error("API de usuários retornou HTTP " + ur.status);
+    }
 
-   // 2) User ID -> Presence
-   const pr=await fetch("https://presence.roblox.com/v1/presence/users",{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({userIds:[user.id]})
-   });
-   if(!pr.ok) throw new Error("Falha ao consultar Presence ("+pr.status+")");
-   const pd=await pr.json();
-   const p=pd.userPresences && pd.userPresences[0];
+    const ud = await ur.json();
 
-   if(!p){
-     box.innerHTML="👤 <b>"+esc(user.name)+"</b><br><span class='muted'>User ID: <span class='id'>"+user.id+"</span></span><br><br>Não há presença disponível.";
-     return;
-   }
+    if(!ud.data || ud.data.length === 0){
+      box.innerHTML = "❌ <b>Usuário não encontrado.</b><br><span class='muted'>Confira o username e tente novamente.</span>";
+      return;
+    }
 
-   const status={0:"Offline",1:"Online",2:"Jogando",3:"No Roblox Studio"}[p.userPresenceType]||"Desconhecido";
-   let html="👤 <b>"+esc(user.name)+"</b><br>";
-   html+="🆔 User ID: <span class='id'>"+user.id+"</span><br>";
-   html+="📡 Status: <span class='"+(p.userPresenceType===2?"ok":"")+"'>"+status+"</span>";
+    const user = ud.data[0];
 
-   if(p.lastLocation) html+="<br>🎮 Local: "+esc(p.lastLocation);
-   if(p.placeId) html+="<br>🗺️ Place ID: <span class='id'>"+p.placeId+"</span>";
-   if(p.rootPlaceId) html+="<br>🗺️ Root Place ID: <span class='id'>"+p.rootPlaceId+"</span>";
-   if(p.gameId) html+="<br>🧩 Job/Instance ID: <span class='id'>"+esc(p.gameId)+"</span>";
+    box.innerHTML =
+      "👤 <b>" + esc(user.name) + "</b><br>" +
+      "<span class='muted'>User ID: <span class='id'>" +
+      esc(user.id) + "</span><br>Consultando presença...</span>";
 
-   if(p.placeId){
-      html+="<br><a class='join' target='_blank' href='https://www.roblox.com/games/start?placeId="+p.placeId+"'>Abrir jogo ↗</a>";
-   }
+    // 2. User ID -> Presence
+    const pr = await fetch(
+      "https://presence.roblox.com/v1/presence/users",
+      {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({userIds:[user.id]})
+      }
+    );
 
-   if(p.gameId){
-      html+="<div class='small'>O Job/Instance ID foi retornado pela Presence API, mas o Roblox não fornece uma URL web universal que transforme qualquer Job ID em entrada forçada no servidor. O botão acima abre a experiência normalmente.</div>";
-   }
+    if(!pr.ok){
+      throw new Error("API de presença retornou HTTP " + pr.status);
+    }
 
-   box.innerHTML=html;
+    const pd = await pr.json();
+    const p = pd.userPresences && pd.userPresences[0];
 
- }catch(e){
-   box.innerHTML="❌ <b>Não foi possível consultar.</b><br><span class='muted'>"+esc(e.message)+"<br><br>Se você abriu este arquivo diretamente como <b>file://</b>, o navegador pode bloquear a requisição por CORS. Publique o mesmo HTML em uma hospedagem HTTPS para fazer as chamadas.</span>";
- }finally{
-   btn.disabled=false;
- }
+    if(!p){
+      box.innerHTML =
+        "👤 <b>" + esc(user.name) + "</b><br>" +
+        "<span class='muted'>User ID: <span class='id'>" +
+        esc(user.id) + "</span></span><br><br>" +
+        "A API não retornou informações de presença.";
+      return;
+    }
+
+    const status = {
+      0: "Offline",
+      1: "Online",
+      2: "Jogando",
+      3: "No Roblox Studio"
+    }[p.userPresenceType] || "Desconhecido";
+
+    let html =
+      "👤 <b>" + esc(user.name) + "</b><br>" +
+      "🆔 User ID: <span class='id'>" + esc(user.id) + "</span><br>" +
+      "📡 Status: <span class='" +
+      (p.userPresenceType === 2 ? "ok" : "") + "'>" +
+      status + "</span>";
+
+    if(p.lastLocation){
+      html += "<br>🎮 Local: " + esc(p.lastLocation);
+    }
+
+    if(p.placeId){
+      html += "<br>🗺️ Place ID: <span class='id'>" +
+        esc(p.placeId) + "</span>";
+    }
+
+    if(p.rootPlaceId){
+      html += "<br>🗺️ Root Place ID: <span class='id'>" +
+        esc(p.rootPlaceId) + "</span>";
+    }
+
+    if(p.gameId){
+      html += "<br>🧩 Job/Instance ID: <span class='id'>" +
+        esc(p.gameId) + "</span>";
+    }
+
+    if(p.placeId){
+      html += "<br><a class='join' target='_blank' rel='noopener noreferrer' href='https://www.roblox.com/games/" +
+        encodeURIComponent(p.placeId) + "/'>Abrir jogo ↗</a>";
+    }
+
+    html += "<div class='small'>A presença é fornecida pelo Roblox e pode não incluir todos os detalhes do servidor. O botão abre a experiência; não garante entrada na mesma instância.</div>";
+
+    box.innerHTML = html;
+
+  } catch(e) {
+    let detalhe = e.message || "Erro desconhecido";
+
+    if(detalhe === "Failed to fetch"){
+      detalhe = "O navegador não conseguiu acessar a API. Pode ser uma falha de rede ou uma restrição CORS da API do Roblox.";
+    }
+
+    box.innerHTML =
+      "❌ <b>Não foi possível consultar.</b><br>" +
+      "<span class='muted'>Detalhes: " + esc(detalhe) +
+      "<br><br>Confira sua conexão e tente novamente. Se persistir, a API do Roblox pode estar indisponível ou bloqueando a requisição. Este erro, sozinho, não significa que você abriu o arquivo como file://.</span>";
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function esc(s){
- return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  }[c]));
 }
-document.getElementById("username").addEventListener("keydown",e=>{if(e.key==="Enter")buscar()});
+
+document.getElementById("username").addEventListener("keydown", e => {
+  if(e.key === "Enter") buscar();
+});
 </script>
 </body>
 </html>
+```
